@@ -1,8 +1,8 @@
-#Hospital Virtual SDK for PHP
+# Hospital Virtual SDK for PHP
 
 Esta libreria provee a los desarrolladores un conjunto de objetos que facilitan la integración de aplicaciones externas a las APIs de Hospital Virtual.
 
-###Requisitos
+### Requisitos
 
 * PHP 5.6 o superior
 
