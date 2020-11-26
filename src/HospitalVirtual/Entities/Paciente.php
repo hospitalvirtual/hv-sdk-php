@@ -5,68 +5,85 @@ namespace HospitalVirtual\Entities;
 
 
 use HospitalVirtual\HVClient;
+use HospitalVirtual\HVException;
 use HospitalVirtual\SDK;
 
 class Paciente
 {
 
-
-    public $datosPersonales = array(
+    public $datos_personales = array(
         "id" => null,
-        "nombre" => null,
-        "apellido" => null,
-        "email" => null,
-        "nacionalidad" => null,
-        "dni" => null,
-        "genero" => null,
-        "cuit" => null,
         "id_persona" => null,
         "id_usuario" => null,
-        "estado_civil" => null,
+        "email" => null,
+        "nombre" => null,
+        "apellido" => null,
+        "fecha_nacimiento" => null,
         "codigo_internacional" => null,
         "codigo_area" => null,
         "telefono" => null,
-        "fecha_nacimiento" => null
+        "genero" => null,
+        "estado_civil" => null,
+        "cuit" => null,
+        "dni" => null,
     );
     public $domicilio = array(
+        "pais" => null,
+        "provincia" => null,
+        "ciudad" => null,
+        "calle" => null,
+        "numero" => null,
+        "dpto" => null,
+        "piso" => null,
+        "codigo_postal" => null
+    );
+
+    public $lugar_nacimiento = array(
+        "pais" => null,
         "provincia" => null,
         "ciudad" => null
     );
+
+    public $datos_medicos = array();
 
     protected $clave;
     protected $claveRepetida;
 
     public function setNombreApellido($nombre, $apellido)
     {
-        $this->datosPersonales["nombre"] = $nombre;
-        $this->datosPersonales["apellido"] = $apellido;
+        $this->datos_personales["nombre"] = $nombre;
+        $this->datos_personales["apellido"] = $apellido;
     }
 
     public function setGenero($genero)
     {
-        $this->datosPersonales["genero"] = $genero;
+        $this->datos_personales["genero"] = $genero;
     }
 
     public function setDNI($dni)
     {
-        $this->datosPersonales["dni"] = $dni;
+        $this->datos_personales["dni"] = $dni;
     }
 
     public function setMail($email)
     {
-        $this->datosPersonales["email"] = $email;
+        if ($this->datos_personales["email"] != '' && $this->datos_personales["id"] != '') {
+            throw new HVException("Restricción de HVAPI, no es posible modificar el mail registrado\n");
+        } else {
+            $this->datos_personales["email"] = $email;
+        }
     }
 
     public function setNacionalidad($nacionalidadd)
     {
-        $this->datosPersonales["nacionalidad"] = $nacionalidadd;
+        $this->datos_personales["nacionalidad"] = $nacionalidadd;
     }
 
     public function setTelefono($codigoInternacional, $codigoArea, $telefono)
     {
-        $this->datosPersonales["codigo_internacional"] = $codigoInternacional;
-        $this->datosPersonales["codigo_area"] = $codigoArea;
-        $this->datosPersonales["telefono"] = $telefono;
+        $this->datos_personales["codigo_internacional"] = $codigoInternacional;
+        $this->datos_personales["codigo_area"] = $codigoArea;
+        $this->datos_personales["telefono"] = $telefono;
     }
 
     public function setDomicilio($provincia, $ciudad)
@@ -83,12 +100,12 @@ class Paciente
 
     public function setFechaNacimiento($fecha)
     {
-        $this->datosPersonales["fecha_nacimiento"] = $fecha;
+        $this->datos_personales["fecha_nacimiento"] = $fecha;
     }
 
     public function toString()
     {
-        print_r($this->datosPersonales);
+        print_r($this->datos_personales);
         print_r($this->domicilio);
     }
 
@@ -111,16 +128,47 @@ class Paciente
 
     private function parseObject($obj)
     {
-        $this->datosPersonales["id"] = $obj->datos_personales->id;
-        $this->datosPersonales["nombre"] = $obj->datos_personales->nombre;
-        $this->datosPersonales["apellido"] = $obj->datos_personales->apellido;
-        $this->datosPersonales["email"] = $obj->datos_personales->email;
-        $this->datosPersonales["dni"] = $obj->datos_personales->dni;
-        $this->datosPersonales["genero"] = $obj->datos_personales->genero;
-        $this->datosPersonales["cuit"] = $obj->datos_personales->cuit;
-        $this->datosPersonales["id_persona"] = $obj->datos_personales->id_persona;
-        $this->datosPersonales["id_usuario"] = $obj->datos_personales->id_usuario;
+        $this->datos_personales = (array)$obj->datos_personales;
+        $this->domicilio = (array)$obj->domicilio;
+        $this->lugar_nacimiento = (array)$obj->lugar_nacimiento;
+        $this->datos_medicos = (array)$obj->datos_medicos;
+
+        $datos_med = var_export($this->datos_medicos, true);
+        $this->datos_medicos = $datos_med;
     }
+
+    public function consultarPacientes($cantidad, $pagina)
+    {
+        if ($cantidad != null && $pagina != null) {
+            $cliente = new HVClient();
+            $arrayPacientes = Array();
+            try {
+                $pacientes = $cliente->get("pacientes/", array(
+                    "cantidad" => $cantidad,
+                    "pagina" => $pagina
+                ));
+
+                $pacientesArray = $pacientes->pacientes;
+
+
+                foreach ($pacientesArray as $pac) {
+
+                    $this->parseObject($pac);
+
+                    array_push($arrayPacientes, $this);
+                }
+
+                return $arrayPacientes;
+
+            } catch (HVException $e) {
+                throw $e;
+            }
+
+        } else {
+            throw new HVException("La cantidad de pacientes y el número de página son obligatorios");
+        }
+    }
+
 
     public function save()
     {
@@ -131,22 +179,34 @@ class Paciente
 
             $cliente = new HVClient();
 
-            $datosEnviar = $this->datosPersonales;
-            $datosEnviar["api_key"] = SDK::getApiKey();
-            $datosEnviar["clave"] = $this->clave;
-            $datosEnviar["clave_repetida"] = $this->claveRepetida;
-            $datosEnviar["email_confirmado"] = true;
-            $datosEnviar["pais_nacimiento"] = $datosEnviar["nacionalidad"];
-            $datosEnviar["provincia_actual"] = $this->domicilio["provincia"];
-            $datosEnviar["ciudad_actual"] = $this->domicilio["ciudad"];
+            if ($this->datos_personales["id"] != '') {
+                $datosEnviar = $this->datos_personales;
+                $datosEnviar["api_key"] = SDK::getApiKey();
+                $datosEnviar["domicilio"] = $this->domicilio;
+                $datosEnviar["lugar_nacimiento"] = $this->lugar_nacimiento;
 
 
-            $respuesta = $cliente->post("pacientes/", $datosEnviar);
+                $respuesta = $cliente->put("pacientes/" . $this->datos_personales["id_persona"] . "/", $datosEnviar);
+                echo $respuesta->mensaje . "\n";
+                return $respuesta;
+            } else {
+                $datosEnviar = $this->datos_personales;
+                $datosEnviar["api_key"] = SDK::getApiKey();
+                $datosEnviar["clave"] = $this->clave;
+                $datosEnviar["clave_repetida"] = $this->claveRepetida;
+                $datosEnviar["email_confirmado"] = true;
+                $datosEnviar["pais_nacimiento"] = $datosEnviar["nacionalidad"];
+                $datosEnviar["provincia_actual"] = $this->domicilio["provincia"];
+                $datosEnviar["ciudad_actual"] = $this->domicilio["ciudad"];
 
-            return $respuesta->id_paciente_registrado;
+
+                $respuesta = $cliente->post("pacientes/", $datosEnviar);
+
+                return $respuesta->id_paciente_registrado;
+            }
 
         } catch (\HospitalVirtual\HVException $e) {
-            echo $e->getMessage();
+            throw $e;
         }
     }
 

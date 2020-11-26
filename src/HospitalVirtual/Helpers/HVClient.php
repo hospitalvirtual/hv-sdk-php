@@ -18,12 +18,19 @@ class HVClient
         }
     }
 
-    public function get($nombreApi)
+    public function get($nombreApi, $parametros = null)
     {
 
-        $data = array(
-            'api_key' => SDK::getApiKey()
-        );
+        if ($parametros == null) {
+            $data = array(
+                'api_key' => SDK::getApiKey()
+            );
+        } else {
+            $data = $parametros;
+
+            $data["api_key"] = SDK::getApiKey();
+        }
+
 
         $params = '';
         foreach ($data as $key => $value)
@@ -94,6 +101,46 @@ class HVClient
 
         return json_decode($result)->datos;
 
+
+    }
+
+    public function put($nombreApi, $objetoPut)
+    {
+
+
+        $curlClient = curl_init();
+
+        $endpoint = $this->getApiURL() . $nombreApi;
+
+
+        curl_setopt_array($curlClient, array(
+            CURLOPT_URL => $endpoint,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "PUT",
+            CURLOPT_POSTFIELDS => json_encode($objetoPut),
+            CURLOPT_HTTPHEADER => array(
+                "cache-control: no-cache",
+                "content-type: application/json"
+            ),
+        ));
+
+        $result = curl_exec($curlClient);
+
+        $responseCode = curl_getinfo($curlClient, CURLINFO_HTTP_CODE);
+
+        $respuestaJson = json_decode($result);
+
+
+        if ($responseCode != 200) {
+            throw new HVException($respuestaJson->mensaje . "\n");
+        }
+        curl_close($curlClient);
+
+        return json_decode($result);
 
 
     }
