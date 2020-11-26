@@ -47,6 +47,23 @@ try {
 
 try {
 
+    /* EJEMPLO DE BUSQUEDA DE UN PACIENTE */
+
+    /*
+    $paciente = new \HospitalVirtual\Entities\Paciente();
+
+    $paciente->buscarPorId(1164);
+
+    print_r($paciente);
+    */
+
+
+} catch (\HospitalVirtual\HVException $e) {
+    echo $e->getMessage();
+}
+
+try {
+
     /* EJEMPLO DE GENERACION DE UNA COLECCION DE PACIENTES */
 
     /*
