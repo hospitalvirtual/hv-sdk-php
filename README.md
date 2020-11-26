@@ -8,6 +8,6 @@ Esta libreria provee a los desarrolladores un conjunto de objetos que facilitan 
 
 #### Documentación:
 
-[Recursos para desarrolladores e información de APIs](https://developers.hospitalvirtual.com.ar)
+[Recursos para desarrolladores e información de APIs](https://developers.hospitalvirtual.com)
 
 ¿Necesitas ayuda? Escribinos a developers [at] hospitalvirtual.com
